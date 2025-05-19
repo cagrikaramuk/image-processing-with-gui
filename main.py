@@ -247,28 +247,36 @@ def apply_prewitt_edge_detection(image):
     kernel_x = np.array([[1, 0, -1], [1, 0, -1], [1, 0, -1]], dtype=np.float32)
     kernel_y = np.array([[1, 1, 1], [0, 0, 0], [-1, -1, -1]], dtype=np.float32)
     
-    grad_x = cv2.filter2D(img_float, cv2.CV_64F, kernel_x)
-    grad_y = cv2.filter2D(img_float, cv2.CV_64F, kernel_y)
+    # Change CV_64F to CV_32F for the output depth of filter2D
+    grad_x = cv2.filter2D(img_float, cv2.CV_32F, kernel_x)
+    grad_y = cv2.filter2D(img_float, cv2.CV_32F, kernel_y)
     
     # Combine gradients - magnitude
     magnitude = cv2.magnitude(grad_x, grad_y)
-    # Convert back to uint8
-    magnitude = cv2.convertScaleAbs(magnitude)
-    return magnitude
+    
+    # Normalize the magnitude to the 0-255 range to enhance visibility
+    cv2.normalize(magnitude, magnitude, 0, 255, cv2.NORM_MINMAX)
+    
+    edge_image = cv2.convertScaleAbs(magnitude)
+    
+    return edge_image
 
 def apply_roberts_cross_edge_detection(image):
     """Apply Roberts Cross edge detection."""
     if len(image.shape) == 3:
         image = convert_to_gray(image)
-        
+
     img_float = image.astype(np.float32)
     kernel_x = np.array([[1, 0], [0, -1]], dtype=np.float32)
     kernel_y = np.array([[0, 1], [-1, 0]], dtype=np.float32)
 
-    grad_x = cv2.filter2D(img_float, cv2.CV_64F, kernel_x)
-    grad_y = cv2.filter2D(img_float, cv2.CV_64F, kernel_y)
+    # Change CV_64F to CV_32F for the output depth of filter2D
+    grad_x = cv2.filter2D(img_float, cv2.CV_32F, kernel_x, anchor=(0, 0))
+    grad_y = cv2.filter2D(img_float, cv2.CV_32F, kernel_y, anchor=(0, 0))
 
     magnitude = cv2.magnitude(grad_x, grad_y)
+    # Normalize before converting to uint8 for better visualization
+    cv2.normalize(magnitude, magnitude, 0, 255, cv2.NORM_MINMAX)
     magnitude = cv2.convertScaleAbs(magnitude)
     return magnitude
 
